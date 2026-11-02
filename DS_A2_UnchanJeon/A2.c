@@ -40,6 +40,9 @@ void freeQueue(Queue* queue);
 Queue* initializeQueue(void);
 QueueNode* createQueueNode(char* newUrl);
 
+void manageHistory(Queue* queue, char* url);
+void printQueueHistory(Queue* queue);
+
 
 void push(Stack* stack, char* newUrl) {
 	if (isStackEmpty(stack)) {
@@ -112,13 +115,136 @@ StackNode* createStackNode(char* newUrl) {
 	return newNode;
 }
 
+void enqueue(Queue* queue, char* newUrl) {
+	QueueNode* newNode = createQueueNode(newUrl);
+	if (isQueueEmpty(queue)) {
+		queue->front = newNode;
+		queue->rear = newNode;
+	} else {
+		queue->rear->next = newNode;
+		queue->rear = newNode;
+	}
+}
 
+char* dequeue(Queue* queue) {
+	if (isQueueEmpty(queue)) {
+		printf("Queue is Empty\n");
+		return NULL;
+	}
 
+	QueueNode* temp = queue->front;
+	char* urlCopy = (char*)malloc(MAX_SIZE);
+	if (urlCopy == NULL) {
+		printf("No Memory");
+		exit(EXIT_FAILURE);
+	}
+
+	strcpy(urlCopy, temp->url);
+	queue->front = temp->next;
+	if (queue->front == NULL) {
+		queue->front = NULL;
+	}
+
+	free(temp);
+	return urlCopy;
+}
+
+char* peekQueue(Queue* queue) {
+	if (isQueueEmpty(queue)) {
+		printf("Queue is Empty\n");
+		return NULL;
+	}
+
+	return queue->front->url;
+}
+
+bool isQueueEmpty(Queue* queue) {
+	return queue->front == NULL;
+}
+
+void freeQueue(Queue* queue) {
+	while (!isQueueEmpty(queue)) {
+		char* url = dequeue(queue);
+		free(url);
+	}
+
+	free(queue);
+}
+
+Queue* initializeQueue(void) {
+	Queue* queue = (Queue*)malloc(sizeof(Queue));
+	if (queue == NULL) {
+		printf("No Memory");
+		exit(EXIT_FAILURE);
+	}
+
+	queue->front = NULL;
+	queue->rear = NULL;
+	return queue;
+}
+
+QueueNode* createQueueNode(char* newUrl) {
+	QueueNode* newNode = (QueueNode*)malloc(sizeof(QueueNode));
+	if (newNode == NULL) {
+		printf("No Memory");
+		exit(EXIT_FAILURE);
+	}
+
+	strcpy(newNode->url, newUrl);
+	newNode->next = NULL;
+	return newNode;
+}
+
+void manageHistory(Queue* queue, char* url) {
+	QueueNode* current = queue->front;
+	QueueNode* prev = NULL;
+	bool exist = false;
+
+	while (current != NULL) {
+		if (strcmp(current->url, url) == 0) {
+			exist = true;
+			break;
+		}
+		prev = current;
+		current = current->next;
+	}
+
+	// If the url exist in the history
+	if (exist) {
+		// Only one history
+		if (current == queue->front && current == queue->rear) {
+			return;
+		}
+		// If the url is first history
+		else if (current == queue->front) {
+			queue->front = current->next;
+			queue->rear->next = current;
+			queue->rear = current;
+			current->next = NULL;
+		}
+		// If the url is last history
+		else if (current == queue->rear) {
+			return;
+		}
+		else {
+			prev->next = current->next;
+			queue->rear->next = current;
+			queue->rear = current;
+			current->next = NULL;
+		}
+	}
+	else {
+		enqueue(queue, url);
+	}
+}
+
+void printQueueHistory(Queue* queue);
 
 int main()
 {
 	Stack* backStack = initializeStack();
-	Stack* frontStack = initializeStack();
+	Stack* forwardStack = initializeStack();
+	Queue* historyQueue = initializeQueue();
 
 	int choice = 0;
 	char inputUrl[MAX_SIZE];
@@ -147,7 +273,8 @@ int main()
 		if (choice == 6) {
 			printf("Exiting.. \n");
 			freeStack(backStack);
-			freeStack(frontStack);
+			freeStack(forwardStack);
+			freeQueue(historyQueue);
 			break;
 		}
 
