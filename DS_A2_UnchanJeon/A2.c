@@ -235,7 +235,19 @@ void manageHistory(Queue* queue, char* url) {
 	}
 }
 
-void printQueueHistory(Queue* queue);
+void printQueueHistory(Queue* queue) {
+	if (isQueueEmpty(queue)) {
+		printf("Browsing History Log is empty.\n");
+		return;
+	}
+	printf("\n-- Browsing History Log (Queue) --\n");
+	QueueNode* current = queue->front;
+	while (current != NULL) {
+		printf("%s\n", current->url);
+		current = current->next;
+	}
+	printf("----------------------------------\n");
+}
 
 int main(int argc, const char* argv[])
 {
@@ -332,6 +344,7 @@ int main(int argc, const char* argv[])
 			break;
 		}
 		case 5: {
+			printQueueHistory(historyQueue);
 			break;
 		}
 		default :
