@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -45,10 +46,6 @@ void printQueueHistory(Queue* queue);
 
 
 void push(Stack* stack, char* newUrl) {
-	if (isStackEmpty(stack)) {
-		printf("Stack Underflow");
-		exit(EXIT_FAILURE);
-	}
 	StackNode* newNode = createStackNode(newUrl);
 	newNode->next = stack->top;
 	stack->top = newNode;
@@ -142,7 +139,7 @@ char* dequeue(Queue* queue) {
 	strcpy(urlCopy, temp->url);
 	queue->front = temp->next;
 	if (queue->front == NULL) {
-		queue->front = NULL;
+		queue->rear = NULL;
 	}
 
 	free(temp);
@@ -240,7 +237,7 @@ void manageHistory(Queue* queue, char* url) {
 
 void printQueueHistory(Queue* queue);
 
-int main()
+int main(int argc, const char* argv[])
 {
 	Stack* backStack = initializeStack();
 	Stack* forwardStack = initializeStack();
@@ -250,7 +247,7 @@ int main()
 	char inputUrl[MAX_SIZE];
 
 	while (1) {
-		printf("----------------------------------\n");
+		printf("\n----------------------------------\n");
 		printf("     Browser History Manager\n");
 		printf("----------------------------------\n");
 		printf("Menu:\n");
@@ -279,20 +276,63 @@ int main()
 		}
 
 		switch (choice) {
-		case 1: {
 
+		case 1: {
+			printf("Please enter URL to visit: ");
+			scanf("%49s", inputUrl);
+			while (getchar() != '\n');
+
+			push(backStack, inputUrl);
+
+			while (!isStackEmpty(forwardStack)) {
+				char* poppedUrl = pop(forwardStack);
+				free(poppedUrl);
+			}
+
+			manageHistory(historyQueue, inputUrl);
+			printf("Successfully visited %s.\n", inputUrl);
+			break;
 		}
 		case 2: {
+			if (isStackEmpty(backStack) || backStack->top->next == NULL) {
+				printf("Error: There is no previous page.\n");
+				break;
+			}
 
+			char* currentPage = pop(backStack);
+			push(forwardStack, currentPage);
+			free(currentPage);
+
+			char* prevPage = peekStack(backStack);
+			printf("Navigated back to %s\n", prevPage);
+			manageHistory(historyQueue, prevPage);
+			break;
 		}
 		case 3: {
+			if (isStackEmpty(forwardStack)) {
+				printf("Error: There is no forward page.\n");
+				break;
+			}
 
+			char* nextPage = pop(forwardStack);
+			push(backStack, nextPage);
+
+			printf("Navigated forward to %s\n", nextPage);
+			manageHistory(historyQueue, nextPage);
+			free(nextPage);
+			break;
 		}
 		case 4: {
-
+			if (isStackEmpty(backStack)) {
+				printf("Current Page: NONE (History is empty)\n");
+			}
+			else {
+				printf("Current Page: %s\n", peekStack(backStack));
+			}
+			break;
 		}
 		case 5: {
-
+			break;
 		}
 		default :
 			printf("Error: Invalid choice. Please select between 1 and 6.\n");
